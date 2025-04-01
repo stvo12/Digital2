@@ -42,6 +42,7 @@ FRESULT fres;
 DWORD fre_clust;
 uint32_t totalSpace, freeSpace;
 char buffer[100];
+uint8_t rxbuff;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -69,8 +70,13 @@ static void MX_SPI1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void transmit_uart(char *string) {
-    HAL_UART_Transmit(&huart2, (uint8_t *)string, strlen(string), HAL_MAX_DELAY);
+void transmit_uart(char *string){
+	uint8_t len = strlen(string);
+	HAL_UART_Transmit(&huart2, (uint8_t*) string, len, 200);
+}
+void Menu(void){
+	transmit_uart("Menu\n");
+	transmit_uart("Seleccione un archivo (numero)");
 }
 /* USER CODE END 0 */
 
@@ -82,41 +88,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-fres = f_mount(&fs, "/", 0);
-if (fres == FR_OK){
-	transmit_uart("MICRO SD CARD IS MOUNTED SUCCESSFULLY!\n");
-} else if (fres != FR_OK){
-	transmit_uart("MICRO SD CARD'S MOUNT ERROR\n");
-}
 
-fres = f_open(&fil, "PRUEBA DE TEXTO.txt", FA_READ);
-if (fres == FR_OK){
-	transmit_uart("FILE OPENED FOR READING.\n");
-}else if (fres != FR_OK){
-	transmit_uart("FILE WAS NOT OPENED FOR READING!\n");
-}
-
-while (f_gets(buffer, sizeof(buffer), &fil)){
-	char mRd[100];
-	sprintf(mRd, "%s", buffer);
-	transmit_uart(mRd);
-}
-/*for (uint8_t i = 0; i < 10; i++){
-	f_puts("YO TAMBIEN.\n", &fil);
-}*/
-fres = f_close(&fil);
-if (fres == FR_OK){
-	transmit_uart("THE FILED IS CLOSE.\n");
-}else if(fres != FR_OK){
-	transmit_uart("THE FILED WAS NOT CLOSED.\n");
-}
-
-f_mount(NULL, "", 1);
-if (fres == FR_OK){
-	transmit_uart("THE MICRO SD CARD IS UNMOUNTED!\n");
-}else if (fres != FR_OK){
-	transmit_uart("THE MICRO SD WAS NOT UNMOUNTED!\n");
-}
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -141,7 +113,61 @@ if (fres == FR_OK){
   MX_SPI1_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
+  /*// Montamos
+  fres = f_mount(&fs, "/",0);
+  if(fres==FR_OK){
+	  transmit_uart("MicroSD card is mounted successfully\n");
+  }else if(fres !=FR_OK){
+	  transmit_uart("MicroSD card's mount error!\n");
+  }
 
+  // Abrimos modo escritura y lectura, y append
+  fres = f_open(&fil, "Hola.txt", FA_OPEN_APPEND | FA_WRITE | FA_READ);
+  if (fres==FR_OK){
+	  transmit_uart("File opened for reading\n");
+  }else if(fres !=FR_OK){
+	  transmit_uart("File was not opened for reading\n");
+  }
+
+  // Escribir en archivo abierto
+  for (uint8_t i = 0; i < 3; i++){
+	  f_puts("This text is written.\n", &fil);
+  }
+  // Cerramos
+  fres = f_close(&fil);
+  if (fres==FR_OK){
+  	  transmit_uart("File closed\n");
+  }else if(fres !=FR_OK){
+  	  transmit_uart("File was not closed\n");
+  }
+
+  //Abrimos modo lectura
+  fres = f_open(&fil, "Hola.txt", FA_READ);
+    if (fres==FR_OK){
+  	  transmit_uart("File opened for reading\n");
+    }else if(fres !=FR_OK){
+  	  transmit_uart("File was not opened for reading\n");
+    }
+  // Leemos archivo
+  while (f_gets(buffer, sizeof(buffer), &fil)){
+	  char mRd[100];
+	  sprintf(mRd, "%s", buffer);
+	  transmit_uart(mRd);
+  }
+  // Cerramos archivo
+  fres = f_close(&fil);
+    if (fres==FR_OK){
+    	  transmit_uart("File closed\n");
+    }else if(fres !=FR_OK){
+    	  transmit_uart("File was not closed\n");
+    }
+
+  //Desmontamos
+    f_mount(NULL, "", 1);
+    if(fres == FR_OK){
+    	transmit_uart("MicroSD is unmounted!\n");
+    }*/
+  Menu();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -149,7 +175,151 @@ if (fres == FR_OK){
   while (1)
   {
     /* USER CODE END WHILE */
+	  HAL_UART_Receive(&huart2, &rxbuff, 1, HAL_MAX_DELAY);
 
+	  switch (rxbuff){
+	  case '1':
+		  //Montamos
+		  fres = f_mount(&fs, "/",0);
+		    if(fres==FR_OK){
+		  	  transmit_uart("MicroSD card is mounted successfully\n");
+		    }else if(fres !=FR_OK){
+		  	  transmit_uart("MicroSD card's mount error!\n");
+		    }
+		  //Abrimos
+		  fres = f_open(&fil, "Hola.txt", FA_READ);
+			if (fres==FR_OK){
+			  transmit_uart("File opened for reading\n");
+			}else if(fres !=FR_OK){
+			  transmit_uart("File was not opened for reading\n");
+			}
+		  // Leemos archivo
+		  while (f_gets(buffer, sizeof(buffer), &fil)){
+			  char mRd[100];
+			  sprintf(mRd, "%s", buffer);
+			  transmit_uart(mRd);
+		  }
+		  // Cerramos archivo
+		  fres = f_close(&fil);
+			if (fres==FR_OK){
+				  transmit_uart("File closed\n");
+			}else if(fres !=FR_OK){
+				  transmit_uart("File was not closed\n");
+			}
+
+		  //Desmontamos
+			f_mount(NULL, "", 1);
+			if(fres == FR_OK){
+				transmit_uart("MicroSD is unmounted!\n");
+			}
+		  break;
+	  case '2':
+		  //Montamos
+		  fres = f_mount(&fs, "/",0);
+			if(fres==FR_OK){
+			  transmit_uart("MicroSD card is mounted successfully\n");
+			}else if(fres !=FR_OK){
+			  transmit_uart("MicroSD card's mount error!\n");
+			}
+		  //Abrimos
+		  fres = f_open(&fil, "Sonic.txt", FA_READ);
+			if (fres==FR_OK){
+			  transmit_uart("File opened for reading\n");
+			}else if(fres !=FR_OK){
+			  transmit_uart("File was not opened for reading\n");
+			}
+		  // Leemos archivo
+		  while (f_gets(buffer, sizeof(buffer), &fil)){
+			  char mRd[100];
+			  sprintf(mRd, "%s", buffer);
+			  transmit_uart(mRd);
+		  }
+		  // Cerramos archivo
+		  fres = f_close(&fil);
+			if (fres==FR_OK){
+				  transmit_uart("File closed\n");
+			}else if(fres !=FR_OK){
+				  transmit_uart("File was not closed\n");
+			}
+
+		  //Desmontamos
+			f_mount(NULL, "", 1);
+			if(fres == FR_OK){
+				transmit_uart("MicroSD is unmounted!\n");
+			}
+		  break;
+	  case '3':
+		  //Montamos
+		  fres = f_mount(&fs, "/",0);
+			if(fres==FR_OK){
+			  transmit_uart("MicroSD card is mounted successfully\n");
+			}else if(fres !=FR_OK){
+			  transmit_uart("MicroSD card's mount error!\n");
+			}
+		  //Abrimos
+		  fres = f_open(&fil, "Tails.txt", FA_READ);
+			if (fres==FR_OK){
+			  transmit_uart("File opened for reading\n");
+			}else if(fres !=FR_OK){
+			  transmit_uart("File was not opened for reading\n");
+			}
+		  // Leemos archivo
+		  while (f_gets(buffer, sizeof(buffer), &fil)){
+			  char mRd[100];
+			  sprintf(mRd, "%s", buffer);
+			  transmit_uart(mRd);
+		  }
+		  // Cerramos archivo
+		  fres = f_close(&fil);
+			if (fres==FR_OK){
+				  transmit_uart("File closed\n");
+			}else if(fres !=FR_OK){
+				  transmit_uart("File was not closed\n");
+			}
+
+		  //Desmontamos
+			f_mount(NULL, "", 1);
+			if(fres == FR_OK){
+				transmit_uart("MicroSD is unmounted!\n");
+			}
+		  break;
+	  case '4':
+		  //Montamos
+		  fres = f_mount(&fs, "/",0);
+			if(fres==FR_OK){
+			  transmit_uart("MicroSD card is mounted successfully\n");
+			}else if(fres !=FR_OK){
+			  transmit_uart("MicroSD card's mount error!\n");
+			}
+		  //Abrimos
+		  fres = f_open(&fil, "ascii-art.txt", FA_READ);
+			if (fres==FR_OK){
+			  transmit_uart("File opened for reading\n");
+			}else if(fres !=FR_OK){
+			  transmit_uart("File was not opened for reading\n");
+			}
+		  // Leemos archivo
+		  while (f_gets(buffer, sizeof(buffer), &fil)){
+			  char mRd[100];
+			  sprintf(mRd, "%s", buffer);
+			  transmit_uart(mRd);
+		  }
+		  // Cerramos archivo
+		  fres = f_close(&fil);
+			if (fres==FR_OK){
+				  transmit_uart("File closed\n");
+			}else if(fres !=FR_OK){
+				  transmit_uart("File was not closed\n");
+			}
+
+		  //Desmontamos
+			f_mount(NULL, "", 1);
+			if(fres == FR_OK){
+				transmit_uart("MicroSD is unmounted!\n");
+			}
+		  break;
+	  }
+	Menu();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
